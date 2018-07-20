@@ -1,64 +1,59 @@
-# importamos las librerias necesarias
-import sys
+#-*-coding: utf-8 -*-
+#El programa está inspirado en los siguientes links:
+#http://www.pythondiario.com/2018/05/proyecto-facescraped-extractor-de.html
+#https://github.com/LuisAlejandroSalcedo/FaceScraped
+from sys import argv
 import os
 try:
     from urllib import urlopen
 except ImportError:
     from urllib.request import urlopen
-from datetime import datetime
 from random import randint
-
-# Metodo para crear el directorio que contendra las imagenes
-def create_dir(prefix):
-    dir_c = os.path.join(os.getcwd(), prefix, datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-    try:
-        os.makedirs(dir_c)
-    except OSError as e:
-        if e.errno != 17:
-            pass
+class Scrapper():
+    def __init__(self):
+        if len(argv) != 2:
+            print("Sintaxis:\n{} (algún numero)".format(argv[0]))
+            exit()
         else:
-            print("Problemas al crear la carpeta.")
-            exit
-    return dir_c
-
-# Función para obtener las imagenes mediante la url
-def getUrl(name):
-    return "http://graph.facebook.com/picture?id=" + name + "&width=800"
-
-
-def getProfile(photoUrl, saveUrl):
-    print("Descargando " + photoUrl + ".")
-    response = urlopen(photoUrl)
-    if response.geturl() != "https://static.xx.fbcdn.net/rsrc.php/v3/yo/r/UlIqmHJn-SK.gif":
-        open(saveUrl, "wb").write(response.read())
-        return True
-    return False
-
-# La función getImges sera la encargada de descargar todas las imganes y descargarlas
-# en nuestro ordenador.
-def getImages(sizeDataset):
-    id = randint(1, int(1e4)) # 1e4 = 10000. id = 1 a 10000.
-    photoCount = 0 # Numero de imagenes. Incrementara constantemente.
-    folder = create_dir("face_data") # Creamos la carpeta que contendra las imagenes
-    while photoCount < sizeDataset: # EL bucle se detendra al alcanzar el numero de imagenes indicadas.
-        if getProfile(getUrl(str(id)), folder + "/" + str(id) + ".jpg"): # Guardamos las imagenes con formato ".jpg"
-            photoCount += 1 # incrementamos la variable "photoCount"
-            id += 1 # Cambiamos la id de la imagen
-        else:
-            id += 10
-    print("\nImagenes creadas en la carpeta face_data.")
-    print("Tamaño del set de datos: " + str(photoCount))
-    return
-
-# Función principal.
-def main():
-    arguments = list(sys.argv[1:]) # El argumento, el cual sera el numero de imagenes que se descargaran
-    if len(arguments) == 1 and arguments[0].isdigit() and int(arguments[0]) < int(1e7):
-        getImages(int(arguments[0]))
-    else: # Si el argumento esta vacio, se le avisara al usuario.
-        print("\nArgumenton incorrecto.")
-        print("Utiliza: python FaceScraped.py <numero de imagenes (entero < 10,000,000)>")
-    return
-
-if __name__ == "__main__":
-    main()
+            try:
+                argv[1] = int(argv[1])
+            except:
+                print("Argumento incorrecto, tienes que poner un numero.")
+                exit()
+                self.main(argv[1])
+            else:
+                self.main(argv[1])
+    def main(self, num):
+        pid = randint(1, int(1e7))
+        pcount = 0
+        dcount = 0
+        try:
+            folder = "FaceScrapped{}".format(randint(100,1000))
+            os.mkdir(str(folder))
+        except Exception as e:
+            print("Ha habido un problema al crear un directorio.\n{}".format(e))
+            exit()
+        print("Se ha creado el directorio {}".format(folder))
+        while pcount < num:
+            photourl = "http://graph.facebook.com/picture?id={}&width=800".format(pid)
+            if self.getprofile(photourl,"{}/{}.jpg".format(folder,pid)):
+                print("Se ha descargado {}.".format(photourl))
+                pcount += 1
+                pid += 1
+            else:
+                dcount += 1
+                if dcount != 20:
+                    pid += 10
+                else:
+                    dcount = 0
+                    print("No se han encontrado imagenes en las anteriores id ({})...".format(pid))
+                    pid = randint(1, int(1e7))
+                    print("...Se ha conseguido un nuevo numero de id: {}".format(pid))
+    def getprofile(self, photourl, saveurl):
+        response = urlopen(photourl)
+        if response.geturl() != "https://static.xx.fbcdn.net/rsrc.php/v3/yo/r/UlIqmHJn-SK.gif":
+            open(saveurl, "wb").write(response.read())
+            return True
+        return False
+if __name__ == '__main__':
+    start = Scrapper()
